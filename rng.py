@@ -1,4 +1,7 @@
 import random
 
+def get_random_choice(chance):
+  return random.choice(chance)
+
 def get_random_num(num):
-  return (random.randint(1, num))
+  return random.randint(1, num)
