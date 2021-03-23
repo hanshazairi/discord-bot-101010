@@ -40,9 +40,9 @@ async def on_message(message):
     "`$greet` - Sends greeting.\n"
     "`$hirob` - Says hi to `Rob Bot the Cat`.\n"
     "`$hiteddy` - Says hi to `Teddy ʕ•ᴥ•ʔ`.\n"
+    "`$ichooseyou [pokémon]` - Returns pokémon sprite.\n"
     "`$joke` - Tells a joke.\n"
-    "`$poke [pokémon]` - Returns pokémon sprite.\n"
-    "`$rng [num]` - Returns random number in the inclusive range [1, num].\n"
+    "`$roll` - Returns random number.\n"
     "`$teddy` - It's a secret."
     )
 
@@ -58,18 +58,9 @@ async def on_message(message):
   if message.content.startswith('$hiteddy'):
     await channel.send('Hi <@%s>!' % teddybot)
 
-  if message.content.startswith('$joke'):
-    data = get_data('joke')
-
-    if isinstance(data, dict):
-      text = data['setup'] + '\n' + data['punchline']
-      await message.reply(text)
-    else:
-      await message.reply('`$joke: %i Error' % data)
-
-  if message.content.startswith('$poke'):
+  if message.content.startswith('$ichooseyou'):
     try:
-      pokemon = message.content.split('$poke ', 1)[1]
+      pokemon = message.content.split('$ichooseyou ', 1)[1]
       data = get_data('pokemon', pokemon)
 
       if isinstance(data, dict):
@@ -81,13 +72,23 @@ async def on_message(message):
       print('$poke: An error occurred.')
       await channel.send ('`$poke [pokémon]`')
 
-  if message.content.startswith('$rng'):
+  if message.content.startswith('$joke'):
+    data = get_data('joke')
+
+    if isinstance(data, dict):
+      text = data['setup'] + '\n' + data['punchline']
+      await message.reply(text)
+    else:
+      await message.reply('`$joke: %i Error' % data)
+
+  if message.content.startswith('$roll'):
     try:
-      num = int(message.content.split('$rng ', 1)[1])
-      num = get_random_num(num)
-      await message.reply('%i' % num)
+      num = int(message.content.split('$roll ', 1)[1])
     except:
-      await message.reply('`$rng [base-10 num > 1]`')
+      num = 6
+  
+    num = get_random_num(num)
+    await message.reply('%i' % num)
 
   if message.content.startswith('$teddy'):
     await message.reply("I love teddy! :teddy_bear:")
