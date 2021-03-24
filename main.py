@@ -1,26 +1,22 @@
+import constants
 import discord
-import os
-from replit import db
-from message_helper import handle_message
-from message_helper import echo
+import h
+import h_message
 from keep_alive import keep_alive
 
 intents = discord.Intents.default()
 intents.members = True
+intents.reactions = True
 client = discord.Client(intents = intents)
-
-test_server = os.getenv('TEST_SERVER')
-me = os.getenv('ME')
 
 @client.event
 async def on_ready():
   print(f'{client.user.name} Bot is live!')
-  #set_mods_wallet(200)
+  #h.set_wallet(200, int(constants.me))
 
 @client.event
 async def on_member_join(member):
-  channel = member.channel
-  await channel.send(f'Welcome {member.author.mention}!')
+  await member.channel.send(f'Welcome {member.author.mention}!')
 
 @client.event
 async def on_message(message):
@@ -28,25 +24,29 @@ async def on_message(message):
     return
 
   if message.content.startswith('$'):
-    if message.author.id == me and message.content.startswith('$echo '):
+    if message.author.id == int(constants.me) and message.content.startswith('$echo '):
       await message.delete()
-      await message.channel.send(echo(message))
+      await message.channel.send(h_message.echo(message))
 
     else:
-      await message.reply(handle_message(message))
+      await message.reply(h_message.handle(message))
 
 @client.event
 async def on_message_delete(message):
-  if message.author.id != me:
-    await message.channel.send(f'<@{message.author.id}> deleted something. :eyes:')
+  if message.author.id != int(constants.me):
+    await message.channel.send(f'{message.author.mention} deleted something. :eyes:')
 
-def set_mods_wallet(balance):
-  guild = client.get_guild(test_server)
-  for role in guild.roles:
-    if role.name == 'Mods':
-      for member in role.members:
-        key = str(member.id) + 'wallet'
-        db[key] = balance
+@client.event
+async def on_reaction_add(reaction, user):
+  if reaction.emoji == '\U0001F4B0':
+    await reaction.message.reply(h.give_money(user, 50, reaction.message.author))
+
+def get_members(role, server):
+  guild = client.get_guild(server)
+
+  for temp in guild.roles:
+    if temp.name == role:
+      return temp.members
 
 keep_alive()
-client.run(os.getenv('TOKEN'))
+client.run(constants.token)

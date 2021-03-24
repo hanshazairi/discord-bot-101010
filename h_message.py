@@ -1,14 +1,9 @@
-import os
-from replit import db
-from api import get_data
-from rng import get_random_choice
-from rng import get_random_num
+import api
+import constants
+import h_db
+import rng
 
-me = os.getenv('ME')
-mybot = os.getenv('MYBOT')
-casino = os.getenv('CASINO')
-
-def handle_message(message):
+def handle(message):
   if message.content.startswith('$help'):
     return help(message)
 
@@ -47,7 +42,7 @@ def help(message):
     return ('Available commands:\n'
     '>>> `$help` - Shows available commands.\n'
     '`$diss` - Throws random diss.\n'
-    f'`$gamble` - Wages money against <@{mybot}>.\n'
+    f'`$gamble` - Wages money against <@{constants.mybot}>.\n'
     '`$greet` - Sends greeting.\n'
     '`$ichooseyou` - Returns pokémon.\n'
     '`$joke` - Tells a joke.\n'
@@ -64,15 +59,16 @@ def echo(message):
     return '`$echo [text]`'
 
   else:
-    if message.author.id == me:
+    if str(message.author.id) == constants.me:
       return text
 
     else:
       return 'I only listen to master Hans.'
 
 def gamble(message):
-  if message.channel.id != casino:
-    return f'No gambling here, you may gamble at <#{casino}>.'
+  if message.channel.id != int(constants.casino):
+    return f'No gambling here, you may gamble at <#{constants.casino}>.'
+
   else:
     try:
       wager = int(message.content.split('$gamble ', 1)[1])
@@ -83,10 +79,10 @@ def gamble(message):
 
     else:
       wallet = 0
-      walletID = str(message.author.id) + 'wallet'
+      w_key = f'{message.author.id}wallet'
 
-      if walletID in db.keys():
-        wallet = int(db[walletID])
+      if w_key in h_db.get_keys():
+        wallet = int(h_db.get_value_for_key(w_key))
 
       if wager < 1:
         return '`$gamble [wager >= 1]`'
@@ -95,8 +91,8 @@ def gamble(message):
         return f'Insufficient funds. Current balance is ${wallet}.'
 
       else:
-        chance = 'LLHW'
-        choice = get_random_choice(chance)
+        choice = 'LLHW'
+        choice = rng.get_something(choice)
 
         if choice == 'L':
           wallet = wallet - wager
@@ -111,7 +107,7 @@ def gamble(message):
           wallet = wallet + wager
           text = f'You won ${wager}.'
 
-        db[walletID] = wallet
+        h_db.put_value_for_key(w_key, wallet)
         text = text + f' Current balance is ${wallet}.'
 
         return text
@@ -125,7 +121,7 @@ def ichooseyou(message):
     return '`$ichooseyou [pokémon]`'
 
   else:
-    data = get_data('pokemon', pokemon)
+    data = api.get_data('pokemon', pokemon)
 
     if isinstance(data, dict):
       sprite = data['sprites']['front_default']
@@ -135,7 +131,7 @@ def ichooseyou(message):
       return f'`$ichooseyou: {data} error`'
 
 def joke(message):
-  data = get_data('joke')
+  data = api.get_data('joke')
 
   if isinstance(data, dict):
     text = data['setup'] + '\n' + data['punchline']
@@ -152,13 +148,13 @@ def roll(message):
     num = 6
 
   finally:
-    return get_random_num(num)
+    return rng.get_num(num)
 
 def wallet(message):
   wallet = 0
-  walletID = str(message.author.id) + 'wallet'
+  w_key = f'{message.author.id}wallet'
 
-  if walletID in db.keys():
-    wallet = int(db[walletID])
+  if w_key in h_db.get_keys():
+    wallet = h_db.get_value_for_key(w_key)
 
   return f'Current balance is ${wallet}.'
