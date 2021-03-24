@@ -2,14 +2,15 @@ import discord
 import os
 from replit import db
 from message_helper import handle_message
+from message_helper import echo
 from keep_alive import keep_alive
 
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents = intents)
 
-test_server = 823173213663133698
-me = 160369095965933568
+test_server = os.getenv('TEST_SERVER')
+me = os.getenv('ME')
 
 @client.event
 async def on_ready():
@@ -29,7 +30,7 @@ async def on_message(message):
   if message.content.startswith('$'):
     if message.author.id == me and message.content.startswith('$echo '):
       await message.delete()
-      await message.channel.send(handle_message(message))
+      await message.channel.send(echo(message))
 
     else:
       await message.reply(handle_message(message))
