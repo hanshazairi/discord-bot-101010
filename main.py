@@ -1,52 +1,77 @@
-import constants
-import discord
-import h
-import h_message
 from keep_alive import keep_alive
+import discord
+import constants as c
+import helper as h
 
 intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
-client = discord.Client(intents = intents)
+bot = discord.Client(intents = intents)
 
-@client.event
+@bot.event
 async def on_ready():
-  print(f'{client.user.name} Bot is live!')
-  #h.set_wallet(200, int(constants.me))
+  print(f'Discord {bot.user.name} Bot is live!')
+#  members = get_members(c.test_server, '@everyone')
+  
+#  for member in members:
+#    h.set_wallet(200, member.id)
 
-@client.event
+@bot.event
 async def on_member_join(member):
   await member.channel.send(f'Welcome {member.author.mention}!')
 
-@client.event
+@bot.event
 async def on_message(message):
-  if message.author == client.user:
+  if message.author == bot.user:
     return
 
   if message.content.startswith('$'):
-    if message.author.id == int(constants.me) and message.content.startswith('$echo '):
-      await message.delete()
-      await message.channel.send(h_message.echo(message))
+    if message.content == '$help':
+      await message.reply(h.help_command())
+
+    elif message.content.startswith('$echo'):
+      if message.author.id == int(c.me):
+        await message.delete()
+        await message.channel.send(h.echo_command(message))
+
+      else:
+        await message.reply('I will not do that.')
+
+    elif message.content.startswith('$gamble'):
+      await message.reply(h.gamble_command(message))
+
+    elif message.content.startswith('$give'):
+      await message.reply(h.give_command(message))
+
+    elif message.content == '$greet':
+      await message.reply(f'Hello {message.author.name}!')
+
+    elif message.content.startswith('$ichooseyou'):
+      await message.reply(h.ichooseyou_command(message))
+
+    elif message.content == '$joke':
+      await message.reply(h.joke_command())
+
+    elif message.content.startswith('$roll'):
+      await message.reply(h.roll_command(message))
+
+    elif message.content == '$wallet':
+      await message.reply(h.wallet_command(message))
 
     else:
-      await message.reply(h_message.handle(message))
+      await message.reply('I don\'t recognise that command.')
 
-@client.event
+@bot.event
 async def on_message_delete(message):
-  if message.author.id != int(constants.me):
+  if message.author.id != int(c.me):
     await message.channel.send(f'{message.author.mention} deleted something. :eyes:')
 
-@client.event
-async def on_reaction_add(reaction, user):
-  if reaction.emoji == '\U0001F4B0':
-    await reaction.message.reply(h.give_money(user, 50, reaction.message.author))
+def get_members(server_ID, role):
+  guild = bot.get_guild(int(server_ID))
 
-def get_members(role, server):
-  guild = client.get_guild(server)
-
-  for temp in guild.roles:
-    if temp.name == role:
-      return temp.members
+  for _role in guild.roles:
+    if _role.name == role:
+      return _role.members
 
 keep_alive()
-client.run(constants.token)
+bot.run(c.token)

@@ -1,7 +1,7 @@
 import random
 
-def get_something(choice):
-  return random.choice(choice)
+def get_opt(chance):
+  return random.choice(chance)
 
-def get_num(num):
-  return random.randint(1, num)
+def get_num(min, max):
+  return random.randint(min, max)

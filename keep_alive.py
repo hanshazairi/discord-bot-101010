@@ -4,8 +4,8 @@ from threading import Thread
 app = Flask('')
 
 @app.route('/')
-def home():
-  return '101010 Bot is still live!'
+def main():
+  return 'Discord 101010 Bot is live!'
 
 def run():
   app.run(host = '0.0.0.0', port = 8080)
