@@ -1,21 +1,28 @@
 import os
 
 token = os.getenv('TOKEN')
-guild = int(os.getenv('GUILD'))
-casino = int(os.getenv('CASINO_CHANNEL'))
-me = int(os.getenv('ME'))
-mybot = int(os.getenv('MYBOT'))
+
+g_test = 823173213663133698
+c_casino = 824177726889000980
+u_me = 160369095965933568
+u_bot = 823438748553183323
+
+echo_regex = '~echo (.+)'
+gamble_regex = '~gamble ((?:[1-9]|\d\d\d*)$)'
+give_regex = '~give <@![0-9]{18}> ((?:[1-9]|\d\d\d*)$)'
+ichooseyou_regex = '~ichooseyou (.+)'
 
 help_text = (
-  '```'
+  '```fix\n'
   '~help       - Shows available commands.\n'
-  f'~gamble     - Wages money against <@{mybot}>.\n'
-  '~give       - Gives money to user.\n'
-  '~greet      - Sends greeting.\n'
-  '~ichooseyou - Returns a pokémon.\n'
+  '~echo       - Repeats what you say.\n'
+  f'~gamble     - Wager your money against me!\n'
+  '~give       - Gives money to specifed user.\n'
+  '~greet      - Greets you.\n'
+  '~ichooseyou - Summons specified pokémon to the chat.\n'
   '~joke       - Tells a joke.\n'
   '~roll       - Returns a random number.\n'
   '~stats      - Shows gamble stats.\n'
-  '~wallet     - Returns wallet balance.\n'
+  '~wallet     - Returns your wallet balance.\n'
   '```'
 )

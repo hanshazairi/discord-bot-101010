@@ -1,4 +1,5 @@
 import discord
+
 import constants as c
 import functions as f
 import utilities as u
@@ -13,8 +14,7 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-  if not member.bot:
-    u.set_stats(member.id)
+  f.on_member_join(member)
 
 @bot.event
 async def on_message(message):
@@ -57,8 +57,7 @@ async def on_message(message):
 
 @bot.event
 async def on_message_delete(message):
-  if message.author.id != c.me and message.author.id != c.mybot:
-    await message.channel.send(f'{message.author.mention} deleted something. :eyes:')
+  await f.on_message_delete(message)
 
 u.keep_alive()
 bot.run(c.token)

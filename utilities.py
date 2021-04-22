@@ -1,8 +1,9 @@
-from flask import Flask
-from replit import db
 from threading import Thread
-import random
+
+from flask import Flask
 import requests
+
+from replit import db
 
 app = Flask('')
 
@@ -24,20 +25,10 @@ def get_value(key):
   return db[key]
   
 def del_value(key):
-  try:
-    del db[key]
-  
-  except Exception as e:
-    print(f'ERROR: del_value({key}): {e}')
+  del db[key]
 
 def put(value, key):
   db[key] = value
-
-def draw_one(chance):
-  return random.choice(chance)
-
-def get_random_num(min, max):
-  return random.randint(min, max)
 
 def get_JSON(URL):
   r = requests.get(URL)

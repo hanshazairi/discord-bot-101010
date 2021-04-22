@@ -1,156 +1,155 @@
+import random
+import re
+
 import constants as c
 import utilities as u
 
-def set_stats(user_ID):
-  u.put(0, f'{user_ID}-stats-level')
-  u.put(0, f'{user_ID}-stats-xp')
-  u.put(0, f'{user_ID}-stats-earnings')
-  u.put(0, f'{user_ID}-stats-losses')
+def get_role_members(bot, role_id):
+  guild = bot.get_guild(c.g_test)
+
+  for role in guild.roles:
+    if role.id == role_id:
+      return role.members
+
+def on_member_join(member):
+  if member.guild.id == c.test_guild and not member.bot:
+    u.put(0, f'{member.id}-wallet')
+    u.put(0, f'{member.id}-stats-level')
+    u.put(0, f'{member.id}-stats-xp')
+    u.put(0, f'{member.id}-stats-earnings')
+    u.put(0, f'{member.id}-stats-losses')
+
+async def on_message_delete(message):
+  if message.author.id != c.u_me and message.author.id != c.u_bot:
+    await message.channel.send(f'{message.author.mention} deleted something. :eyes:')
 
 async def echo_command(message):
-  try:
-    text = message.content.split('~echo ', 1)[1]
-      
-  except Exception as e:
-    print(f'ERROR: ~echo: {e}')
+  match = re.search(c.echo_regex, message.content)
 
-    await message.reply('Something went wrong..')
+  if match:
+    text = match.group(1)
+
+    if message.guild:
+        await message.delete()
+
+    await message.channel.send(text)
 
   else:
-    if message.author.id == int(c.me):
-      await message.delete()
-      await message.channel.send(text)
-
-    else:
-      await message.reply('I will not do that.')
+    await message.reply('`~echo [text]`')
 
 async def gamble_command(message):
-  if message.channel.id != c.casino:
-    await message.reply(f'No gambling here, you may gamble at <#{c.casino}>.')
+  if message.guild:
+    if message.guild.id == c.g_test:
+      if message.channel.id == c.c_casino:
+        match = re.search(c.gamble_regex, message.content)
 
-  else:
-    try:
-      wager = int(message.content.split('~gamble ', 1)[1])
+        if match:
+          wager = int(match.group(1))
+          w_key = f'{message.author.id}-wallet'
+          lvl_key = f'{message.author.id}-stats-level'
+          xp_key = f'{message.author.id}-stats-xp'
+          e_key = f'{message.author.id}-stats-earnings'
+          l_key = f'{message.author.id}-stats-losses'
+          wallet = u.get_value(w_key)
+          level = u.get_value(lvl_key)
+          xp = u.get_value(xp_key)
+          earnings = u.get_value(e_key)
+          losses = u.get_value(l_key)
 
-    except Exception as e:
-      print(f'ERROR: ~gamble: {e}')
+          if wager <= wallet:
+            chance = 'LLHW'
+            outcome = random.choice(chance)
 
-      await message.reply('`~gamble [whole number > 0]`')
+            if outcome == 'H':
+              wager = int(wager / 2)
 
-    else:
-      wallet_key = f'{message.author.id}-wallet'
-      lvl_key = f'{message.author.id}-stats-level'
-      xp_key = f'{message.author.id}-stats-xp'
-      earnings_key = f'{message.author.id}-stats-earnings'
-      losses_key = f'{message.author.id}-stats-losses'
-
-      try:
-        wallet = u.get_value(wallet_key)
-        level = u.get_value(lvl_key)
-        xp = u.get_value(xp_key)
-        earnings = u.get_value(earnings_key)
-        losses = u.get_value(losses_key)
-
-      except Exception as e:
-        print(f'ERROR: ~gamble: {e}')
-
-        await message.reply('Something went wrong..')
-
-      else:
-        if wager < 1:
-          await message.reply('`~gamble [whole number > 0]`')
-
-        elif wager > wallet:
-          await message.reply(f'Insufficient funds. You have ${wallet}.')
-
-        else:
-          chance = 'LLHW'
-          draw = u.draw_one(chance)
-
-          if draw == 'L':
-            text = f'You lost ${wager}.'
-            losses += wager
-            wager = -wager
-
-          elif draw == 'H':
-            wager = int(wager / 2)
-            xp += wager
-            earnings += wager
-            text = f'You won ${wager}.'
-
-          elif draw == 'W':
-            xp += wager
-            earnings += wager
-            text = f'You won ${wager}.'
-
-          while True:
-            xp_to_next_level = 5 * level ** 2 + 50 * level + 100
-            
-            if xp >= xp_to_next_level:
-              level += 1
-              xp -= xp_to_next_level
+            if outcome == 'L':
+              wallet -= wager
+              losses += wager
+              text = f'You lost ${wager}.'
 
             else:
-              break
+              wallet += wager
+              xp += wager
+              earnings += wager
+              text = f'You won ${wager}.'
 
-          wallet += wager
-          u.put(wallet, wallet_key)
-          u.put(level, lvl_key)
-          u.put(xp, xp_key)
-          u.put(earnings, earnings_key)
-          u.put(losses, losses_key)
+            while True:
+              xp_to_next_lvl = 5 * level ** 2 + 50 * level + 100
+              
+              if xp >= xp_to_next_lvl:
+                level += 1
+                xp -= xp_to_next_lvl
 
-          await message.reply(f'{text} Current balance is ${wallet}.')
+              else:
+                break
 
-async def give_command(message):
-  try:
-    donor = message.author
-    recipient = message.mentions[0]
-    amount = int(message.content.split(' ', 2)[2])
+            u.put(wallet, w_key)
+            u.put(level, lvl_key)
+            u.put(xp, xp_key)
+            u.put(earnings, e_key)
+            u.put(losses, l_key)
 
-  except Exception as e:
-    print(f'ERROR: ~give: {e}')
+            await message.reply(f'{text} Current balance is ${wallet}.')
 
-    await message.reply('`~give [@user] [amount]`')
-
-  else:
-    if recipient.id != donor.id:
-      recipient_key = f'{recipient.id}-wallet'
-      donor_key = f'{donor.id}-wallet'
-
-      try:
-        recipient_walet = u.get_value(recipient_key)
-        donor_wallet = u.get_value(donor_key)
-
-      except Exception as e:
-        print(f'ERROR: ~give: {e}')
-
-        await message.reply('Something weng wrong..')
-
-      else:
-        if donor_wallet >= amount:
-          
-          u.put(recipient_walet + amount, recipient_key)
-          u.put(donor_wallet - amount, donor_key)
-
-          await message.reply( f'You gave {recipient.mention} ${amount}.')
+          else:
+            await message.reply(f'Insufficient funds. You have ${wallet}.')
 
         else:
-          await message.reply(f'Insufficient funds. You have ${donor_wallet}.')
+          await message.reply('`~gamble [wager > 0]`')
+
+      else:
+        await message.reply(f'Strictly no gambling here. You may gamble at <#{c.c_casino}>.')
 
     else:
-      await message.reply('I will not do that.')
-
-async def ichooseyou_command(message):
-  try:
-    pokemon = message.content.split('~ichooseyou ', 1)[1]
-    
-  except Exception as e:
-    print(f'ERROR: ~ichooseyou: {e}')
-
-    await message.reply('`~ichooseyou [pokémon]`')
+      await message.reply('Feature unavailable.')
 
   else:
+    await message.reply('Feature unavailable.')
+
+async def give_command(message):
+  if message.guild:
+    if message.guild.id == c.g_test:
+      match = re.search(c.give_regex, message.content)
+
+      if match:
+        donor = message.author
+        recipient = message.mentions[0]
+        amount = int(match.group(1))
+
+        if recipient.id != donor.id and not recipient.bot:
+          r_key = f'{recipient.id}-wallet'
+          d_key = f'{donor.id}-wallet'
+          recipient_wallet = u.get_value(r_key)
+          d_wallet = u.get_value(d_key)
+
+          if d_wallet >= amount:
+            u.put(recipient_wallet + amount, r_key)
+            u.put(d_wallet - amount, d_key)
+
+            await message.reply( f'You gave {recipient.mention} ${amount}.')
+
+          else:
+            await message.reply(f'Insufficient funds. You have ${d_wallet}.')
+
+        else:
+          await message.reply('Unable to fulfill request.')
+
+      else:
+        await message.reply('`~give [@user] [amount > 0]`')
+      
+    else:
+      await message.reply('Feature unavailable.')
+
+  else:
+    await message.reply('Feature unavailable.')
+
+async def ichooseyou_command(message):
+  match = re.search(c.ichooseyou_regex, message.content)
+
+  if match:
+    pokemon = match.group(1)
+
     try:
       data = u.get_JSON(f'https://pokeapi.co/api/v2/pokemon/{pokemon}')
 
@@ -162,9 +161,12 @@ async def ichooseyou_command(message):
     else:
       await message.reply(data['sprites']['front_default'])
 
+  else:
+    await message.reply('`~ichooseyou [pokémon]`')
+
 async def joke_command(message):
   try:
-      data = u.get_JSON('https://official-joke-api.appspot.com/random_joke')
+    data = u.get_JSON('https://official-joke-api.appspot.com/random_joke')
 
   except Exception as e:
     print(f'ERROR: ~joke: {e}')
@@ -176,53 +178,51 @@ async def joke_command(message):
 
 async def roll_command(message):
   try:
-    max = int(message.content.split('$roll ', 1)[1])
+    max = int(message.content.split('~roll ', 1)[1])
 
   except:
     max = 6
 
   finally:
-    await message.reply(u.get_random_num(1, max))
+    await message.reply(random.randint(1, max))
 
 async def stats_command(message):
-  s_key = f'{message.author.id}-stats'
-  lvl_key = f'{s_key}-level'
-  xp_key = f'{s_key}-xp'
-  e_key = f'{s_key}-earnings'
-  l_key = f'{s_key}-losses'
+  if message.guild:
+    if message.guild.id == c.g_test:
+      lvl_key = f'{message.author.id}-stats-level'
+      xp_key = f'{message.author.id}-stats-xp'
+      e_key = f'{message.author.id}-stats-earnings'
+      l_key = f'{message.author.id}-stats-losses'
+      level = u.get_value(lvl_key)
+      xp = u.get_value(xp_key)
+      earnings = u.get_value(e_key)
+      losses = u.get_value(l_key)
+      xp_to_next_lvl = 5 * level ** 2 + 50 * level + 100
+      stats = (
+        f'Level {level}\n'
+        f'{xp}/{xp_to_next_lvl} XP\n'
+        f'Earnings = ${earnings}\n'
+        f'Losses = ${losses}'
+      )
 
-  try:
-    level = u.get_value(lvl_key)
-    xp = u.get_value(xp_key)
-    earnings = u.get_value(e_key)
-    losses = u.get_value(l_key)
-
-  except Exception as e:
-    print(f'ERROR: ~stats: {e}')
-
-    await message.reply('Something went wrong..')
+      await message.reply(stats)
+      
+    else:
+      await message.reply('Feature unavailable.')
 
   else:
-    xp_to_next_level = 5 * level ** 2 + 50 * level + 100
-    stats = (
-      f'Level {level}\n'
-      f'{xp}/{xp_to_next_level} XP\n'
-      f'Earnings = ${earnings}\n'
-      f'Losses = ${losses}\n'
-    )
-
-    await message.reply(stats)
+    await message.reply('Feature unavailable.')
 
 async def wallet_command(message):
-  wallet_key = f'{message.author.id}-wallet'
-
-  try:
-    wallet = u.get_value(wallet_key)
-
-  except Exception as e:
-    print(f'ERROR: ~wallet: {e}')
-
-    await message.reply('Something went wrong..')
+  if message.guild:
+    if message.guild.id == c.g_test:
+      key = f'{message.author.id}-wallet'
+      wallet = u.get_value(key)
+      
+      await message.reply(f'Current balance is ${wallet}.')
+      
+    else:
+      await message.reply('Feature unavailable.')
 
   else:
-    await message.reply(f'Current balance is ${wallet}.')
+    await message.reply('Feature unavailable.')
