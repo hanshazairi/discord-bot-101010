@@ -12,6 +12,8 @@ bot = discord.Client(intents = intents)
 async def on_ready():
   print(f'Discord {bot.user.name} Bot is live!')
 
+  #u.print_keys()
+
 @bot.event
 async def on_member_join(member):
   f.on_member_join(member)

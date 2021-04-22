@@ -30,6 +30,10 @@ def del_value(key):
 def put(value, key):
   db[key] = value
 
+def print_keys():
+  for index, key in enumerate(keys()):
+    print(f'{index + 1}: {key}: {get_value(key)}')
+
 def get_JSON(URL):
   r = requests.get(URL)
 
